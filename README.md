@@ -6,7 +6,7 @@ A small racing simulation for training a Proximal Policy Optimization (PPO) agen
 
 The saved run used 150,000 environment steps and one training seed (42). The selected checkpoint completed all 10 held-out test tracks, with a mean successful lap time of 16.16 s. The baseline also completed all 10, with a mean of 22.33 s. These figures describe this finite procedural-track test set; they do not establish performance on real circuits or across independent training runs.
 
-The evaluation table and summary are in [`outputs/evaluation`](outputs/evaluation/). The selected policy is `outputs/ppo_best_validation.pt`. A compact, checkpoint-free results bundle is provided as `dashboard_results.zip` for the dashboard deployment.
+The evaluation table, summary, and track maps are in [`outputs/evaluation`](outputs/evaluation/). The selected policy is `outputs/ppo_best_validation.pt`. A compact, checkpoint-free results bundle is provided as `dashboard_results.zip` for the dashboard deployment; it contains the saved metrics and held-out track maps.
 
 ## Run locally
 
@@ -60,7 +60,7 @@ To deploy with Streamlit Community Cloud:
 2. In [Streamlit Community Cloud](https://share.streamlit.io/), choose **Create app** and select the repository and branch.
 3. Set the app file to `streamlit_dashboard.py`, then deploy.
 
-The archive contains recorded CSV/JSON metrics from `outputs/`, not reconstructed console-log data or the policy checkpoint. To publish another run, replace the bundle with a ZIP containing that run's `outputs/` result files and commit the change. Keep `requirements.txt` focused on the dashboard; training dependencies are in `requirements-dev.txt`.
+The archive contains recorded CSV/JSON metrics and held-out track maps from `outputs/`, not console-log reconstructions or the policy checkpoint. To publish another run, replace the bundle with a ZIP containing that run's result files and `track_*_comparison.png` images, then commit the change. Keep `requirements.txt` focused on the dashboard; training dependencies are in `requirements-dev.txt`.
 
 ## Repository contents
 

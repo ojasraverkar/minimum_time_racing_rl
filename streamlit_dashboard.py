@@ -177,7 +177,7 @@ with st.sidebar:
     st.divider()
     st.caption("Expected artifacts")
     st.code("episode_metrics.csv\nevaluation/evaluation.csv\nevaluation_summary.json\nsummary.json", language="text")
-    st.caption("Missing files are shown as unavailable. The bundled training curves are reconstructed from the submitted console log; use raw CSV outputs when available for full-fidelity diagnostics.")
+    st.caption("Missing files are shown as unavailable. The bundled training and evaluation charts use the saved CSV results.")
 
 members: dict[str, bytes] = {}
 if data_mode == "Bundled final results":
@@ -328,7 +328,7 @@ if evaluation_summary.get("ppo_config"):
 if data_mode == "Local outputs folder":
     st.caption(f"Data source: `{root_dir}`")
 elif data_mode == "Bundled final results":
-    st.caption("Data source: bundled final submission run. These metrics were reconstructed from your recorded training and evaluation logs; no model is retrained by this dashboard.")
+    st.caption("Data source: bundled final submission run. The dashboard reads saved results and does not retrain the policy.")
 else:
     st.caption("Data source: uploaded results. Files are processed in this session only.")
 
@@ -522,8 +522,8 @@ with tab_evaluation:
         if matched_count is not None:
             st.caption(f"Matched successful tracks: {matched_count}. Matched means: PPO {_format_seconds(matched_ppo_mean)}; baseline {_format_seconds(matched_base_mean)}.")
 
-        # Discover and show trajectory comparison images if included in the ZIP/local output directory.
-        st.markdown("#### Trajectory comparisons")
+        # Show the held-out circuit layouts and controller paths as a compact gallery.
+        st.markdown("#### Held-out track maps")
         track_images: list[tuple[str, bytes | Path]] = []
         if data_mode == "Local outputs folder":
             search_root = root_dir
@@ -536,18 +536,31 @@ with tab_evaluation:
                     track_images.append((Path(name).name, data))
         track_images.sort(key=lambda x: x[0])
         if track_images:
-            image_names = [name for name, _ in track_images]
-            selected_img_name = st.selectbox("Select trajectory plot", image_names)
-            selected_item = next(item for item in track_images if item[0] == selected_img_name)
-            try:
-                if isinstance(selected_item[1], Path):
-                    st.image(str(selected_item[1]), caption=selected_img_name, use_container_width=True)
-                else:
-                    st.image(selected_item[1], caption=selected_img_name, use_container_width=True)
-            except Exception as exc:
-                st.caption(f"Could not display the selected plot: {exc}")
+            st.caption("Each map shows the track boundaries and the path taken by PPO and the geometric baseline.")
+            result_by_seed = {}
+            if "track_seed" in ev.columns:
+                result_by_seed = {str(int(row["track_seed"])): row for _, row in ev.iterrows()}
+            for start in range(0, len(track_images), 2):
+                gallery_columns = st.columns(2)
+                for column, (image_name, image_data) in zip(gallery_columns, track_images[start:start + 2]):
+                    track_seed = Path(image_name).stem.removeprefix("track_").removesuffix("_comparison")
+                    result = result_by_seed.get(track_seed)
+                    with column.container(border=True):
+                        st.markdown(f"**Track {track_seed}**")
+                        image_source = str(image_data) if isinstance(image_data, Path) else image_data
+                        st.image(
+                            image_source,
+                            alt=f"Track {track_seed} map comparing PPO and geometric baseline paths",
+                            width="stretch",
+                        )
+                        if result is not None:
+                            ppo_time = result.get("ppo_lap_time_s")
+                            baseline_time = result.get("baseline_lap_time_s")
+                            ppo_label = f"{float(ppo_time):.2f} s" if pd.notna(ppo_time) else "did not finish"
+                            baseline_label = f"{float(baseline_time):.2f} s" if pd.notna(baseline_time) else "did not finish"
+                            st.caption(f"PPO: {ppo_label} · Baseline: {baseline_label}")
         else:
-            st.caption("No `track_*_comparison.png` files were found. Include the `evaluation` folder or its PNGs in the results ZIP to show trajectories here.")
+            st.info("No track maps were found. Include the `track_*_comparison.png` files from the evaluation folder in the results ZIP to show the gallery.")
 
 with tab_diagnostics:
     st.subheader("PPO optimisation diagnostics")

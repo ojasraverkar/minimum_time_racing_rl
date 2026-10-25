@@ -54,7 +54,7 @@ For Streamlit Community Cloud:
 2. Choose the GitHub repository and branch.
 3. Set **Main file path** to `streamlit_dashboard.py` and deploy.
 
-The dashboard reads the bundled metrics archive automatically. To publish results from another experiment, create a ZIP containing its CSV and JSON result files and replace `dashboard_results.zip` in the repository. Do not include model checkpoints in the dashboard bundle unless there is a separate reason to distribute them.
+The dashboard reads the bundled metrics and track-map archive automatically. To publish another experiment, create a ZIP containing its CSV/JSON result files and `track_*_comparison.png` images, then replace `dashboard_results.zip` in the repository. Keep model checkpoints out of the dashboard bundle.
 
 ## 4. Final review
 
