@@ -338,14 +338,18 @@ if not any([episodes is not None, evaluation is not None, summary, evaluation_su
     st.stop()
 
 k1, k2, k3, k4, k5 = st.columns(5)
-k1.metric("Training steps", f"{int(n_steps):,}" if n_steps is not None else "N/A")
-k2.metric("Training episodes", f"{len(episodes):,}" if episodes is not None else "N/A")
+k1.metric("Training steps", f"{int(n_steps):,}" if n_steps is not None else "N/A",
+          help="Environment interactions collected while learning. One step is one observation, action, and reward.")
+k2.metric("Training episodes", f"{len(episodes):,}" if episodes is not None else "N/A",
+          help="Recorded training runs. Each ends when a lap completes, the car leaves the track, or the step limit is reached.")
 k3.metric("PPO completion", f"{ppo_completed}/{eval_n}" if eval_n else "N/A",
-          f"{ppo_rate:.0%}" if ppo_rate is not None else None)
+          f"{ppo_rate:.0%}" if ppo_rate is not None else None,
+          help="Held-out test tracks completed by the learned PPO policy.")
 k4.metric("Baseline completion", f"{base_completed}/{base_n}" if base_n else "N/A",
-          f"{base_rate:.0%}" if base_rate is not None else None)
+          f"{base_rate:.0%}" if base_rate is not None else None,
+          help="The same held-out tracks completed by the hand-coded geometric controller.")
 k5.metric("PPO vs baseline", f"{pct_faster:+.1f}%" if pct_faster is not None else "N/A",
-          help="Positive means PPO is faster on tracks where both controllers completed the lap.")
+          help="Percent lower mean lap time for PPO on tracks both controllers completed. Positive favors PPO; negative favors the baseline.")
 
 if pct_faster is not None:
     st.caption("Lap-time comparison uses only tracks completed by both methods. Positive percentage means PPO's matched-track mean lap time is lower.")
@@ -359,6 +363,11 @@ tab_overview, tab_training, tab_evaluation, tab_diagnostics, tab_files = st.tabs
 
 with tab_overview:
     st.subheader("Experiment overview")
+    st.write(
+        "This run trains a PPO driving policy on procedurally generated tracks, then compares it with a geometric "
+        "look-ahead controller on a separate held-out set. The summary below reports saved results; opening this "
+        "dashboard does not run training or evaluation."
+    )
     if summary:
         meta_cols = st.columns(4)
         meta_cols[0].metric("Training seed", str(summary.get("random_seed", "N/A")))
@@ -419,6 +428,10 @@ with tab_overview:
 
 with tab_training:
     st.subheader("Training dynamics")
+    st.caption(
+        "These charts show what happened during learning, not final test performance. Episodes end on a completed lap, "
+        "an off-track event, or the episode step limit."
+    )
     if episodes is None or episodes.empty:
         st.info("`episode_metrics.csv` was not found. Upload it or set the local outputs folder correctly.")
     else:
@@ -443,6 +456,7 @@ with tab_training:
             fig.update_layout(title="Episode return over training", xaxis_title="Episode",
                               yaxis_title="Return", hovermode="x unified", height=390)
             st.plotly_chart(fig, use_container_width=True)
+            st.caption("Episode return is the sum of rewards for that run. The moving average smooths short-term variation; higher is better under this reward design.")
 
         c1, c2 = st.columns(2)
         with c1:
@@ -453,6 +467,7 @@ with tab_training:
                 fig.update_yaxes(tickformat=".0%", range=[0, 1.05])
                 fig.update_layout(height=340)
                 st.plotly_chart(fig, use_container_width=True)
+                st.caption("Progress is the fraction of a lap completed before the episode ended. A value of 100% indicates a finish.")
             else:
                 st.info("No `progress_fraction` column available.")
         with c2:
@@ -464,6 +479,7 @@ with tab_training:
                                      labels={lap_col: "Lap time (s)"})
                     fig.update_layout(height=340)
                     st.plotly_chart(fig, use_container_width=True)
+                    st.caption("Only completed training laps have a lap time, so failed runs do not appear in this plot.")
                 else:
                     st.info("No successful lap times are present in this episode CSV.")
             else:
@@ -480,6 +496,10 @@ with tab_training:
 
 with tab_evaluation:
     st.subheader("PPO versus geometric baseline")
+    st.caption(
+        "Both controllers run on the same held-out procedural tracks. Completion measures reliability; lap time is "
+        "reported only for completed laps. Track progress is shown separately so unfinished runs remain visible."
+    )
     if evaluation is None or evaluation.empty:
         st.info("`evaluation.csv` not found. Run `python evaluate.py --model outputs/ppo_best_validation.pt --output-dir outputs/evaluation` or upload the evaluation results.")
     else:
@@ -502,6 +522,7 @@ with tab_evaluation:
                          title="Lap time by track — successful laps only", text_auto=".2f")
             fig.update_layout(height=430, hovermode="x unified")
             st.plotly_chart(fig, use_container_width=True)
+            st.caption("Lower bars mean faster completed laps. Tracks without a completed lap are omitted from this time chart.")
         else:
             st.info("Neither controller has recorded successful lap times in this evaluation CSV.")
 
@@ -518,6 +539,7 @@ with tab_evaluation:
             fig.update_yaxes(tickformat=".0%", range=[0, 1.05])
             fig.update_layout(height=360)
             st.plotly_chart(fig, use_container_width=True)
+            st.caption("Progress is the fraction of each track completed. Values below 100% indicate that the episode ended before the finish.")
 
         if matched_count is not None:
             st.caption(f"Matched successful tracks: {matched_count}. Matched means: PPO {_format_seconds(matched_ppo_mean)}; baseline {_format_seconds(matched_base_mean)}.")
@@ -564,6 +586,10 @@ with tab_evaluation:
 
 with tab_diagnostics:
     st.subheader("PPO optimisation diagnostics")
+    st.caption(
+        "These values describe PPO's parameter updates, not driving quality by themselves. Use held-out completion and "
+        "lap times above to judge performance; diagnostics help explain how learning changed."
+    )
     if updates is None or updates.empty:
         st.info("`train_update_metrics.csv` not found. This tab populates when your training run exports update diagnostics.")
     else:
@@ -577,7 +603,15 @@ with tab_diagnostics:
         numeric_cols = [c for c in diag.columns if c != x_col and pd.api.types.is_numeric_dtype(diag[c])]
         preferred = [c for c in ["approx_kl", "clip_fraction", "entropy", "policy_loss", "value_loss", "actor_loss", "critic_loss", "policy_std"] if c in numeric_cols]
         selected_metrics = st.multiselect("Metrics to plot", options=preferred or numeric_cols,
-                                          default=(preferred[:3] if preferred else numeric_cols[:3]))
+                                          default=(preferred[:3] if preferred else numeric_cols[:3]),
+                                          help="Choose optimization signals to compare across training updates.")
+        with st.expander("What do these metrics mean?"):
+            st.markdown(
+                "- **Approx. KL:** how far a policy update moved from the previous policy. Sudden spikes can indicate a large update.\n"
+                "- **Clip fraction:** share of PPO samples whose policy change was clipped by the PPO objective.\n"
+                "- **Entropy:** randomness in the policy's action choices. It often decreases as the policy settles.\n"
+                "- **Actor/critic loss:** optimization errors for action selection and value prediction. Their scales are not direct measures of lap performance."
+            )
         if selected_metrics:
             chart_data = diag[[x_col] + selected_metrics].melt(id_vars=x_col, var_name="Metric", value_name="Value")
             fig = px.line(chart_data, x=x_col, y="Value", color="Metric", markers=True,
