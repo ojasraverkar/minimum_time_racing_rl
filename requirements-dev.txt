@@ -1,0 +1,5 @@
+-r requirements-manual.txt
+torch>=2.0
+matplotlib>=3.7
+gymnasium>=0.29
+pytest>=7.0

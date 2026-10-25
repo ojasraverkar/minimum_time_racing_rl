@@ -1,0 +1,50 @@
+{
+  "evaluation_type": "standalone_held_out_evaluation",
+  "model_path": "outputs\\ppo_best_validation.pt",
+  "observation_version": "racing_obs_signed_curvature_v2",
+  "checkpoint_role": "best_validation",
+  "checkpoint_timesteps": 150000,
+  "ppo_config": {
+    "gamma": 0.995,
+    "gae_lambda": 0.95,
+    "learning_rate": 0.0003,
+    "update_epochs": 6,
+    "minibatch_size": 256,
+    "clip_epsilon": 0.2,
+    "value_coefficient": 0.5,
+    "entropy_coefficient": 0.005,
+    "max_grad_norm": 0.5
+  },
+  "track_seeds": [
+    1301,
+    1303,
+    1307,
+    1319,
+    1321,
+    1327,
+    1361,
+    1367,
+    1373,
+    1381
+  ],
+  "max_episode_steps": 1800,
+  "number_of_tracks": 10,
+  "ppo_completed_tracks": 10,
+  "ppo_completion_rate": 1.0,
+  "ppo_successful_laps": 10,
+  "ppo_mean_successful_lap_time_s": 16.156666666666634,
+  "baseline_completed_tracks": 10,
+  "baseline_completion_rate": 1.0,
+  "baseline_successful_laps": 10,
+  "baseline_mean_successful_lap_time_s": 22.3333333333336,
+  "matched_successful_track_count": 10,
+  "ppo_mean_time_on_matched_tracks_s": 16.156666666666634,
+  "baseline_mean_time_on_matched_tracks_s": 22.3333333333336,
+  "mean_paired_time_difference_s_ppo_minus_baseline": -6.17666666666697,
+  "device": "cpu",
+  "software_versions": {
+    "python": "3.14.3",
+    "numpy": "2.5.4",
+    "torch": "2.14.1+cpu"
+  }
+}

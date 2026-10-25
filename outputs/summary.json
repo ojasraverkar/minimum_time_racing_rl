@@ -1,0 +1,114 @@
+{
+  "project": "Reinforcement Learning for Optimal Control in Minimum-Time Lap Simulation",
+  "timesteps_completed": 150000,
+  "episodes_completed": 210,
+  "random_seed": 42,
+  "observation_version": "racing_obs_signed_curvature_v2",
+  "rollout_steps": 2048,
+  "gamma": 0.995,
+  "gae_lambda": 0.95,
+  "max_episode_steps": 1800,
+  "evaluation_interval_steps": 20000,
+  "render_interval_steps": 30,
+  "training_track_seeds": [
+    101,
+    203,
+    307,
+    409,
+    503
+  ],
+  "validation_track_seeds_for_checkpoint_selection": [
+    1049,
+    1051,
+    1061,
+    1063,
+    1069,
+    1087,
+    1091,
+    1093,
+    1097,
+    1103,
+    1109,
+    1117
+  ],
+  "validation_track_count": 12,
+  "final_test_track_seeds": [
+    1301,
+    1303,
+    1307,
+    1319,
+    1321,
+    1327,
+    1361,
+    1367,
+    1373,
+    1381
+  ],
+  "final_test_track_count": 10,
+  "ppo_config": {
+    "gamma": 0.995,
+    "gae_lambda": 0.95,
+    "learning_rate": 0.0003,
+    "update_epochs": 6,
+    "minibatch_size": 256,
+    "clip_epsilon": 0.2,
+    "value_coefficient": 0.5,
+    "entropy_coefficient": 0.005,
+    "max_grad_norm": 0.5
+  },
+  "software_versions": {
+    "python": "3.14.3",
+    "numpy": "2.5.4",
+    "torch": "2.14.1+cpu"
+  },
+  "device": "cpu",
+  "dt_seconds": 0.03333333333333333,
+  "track_width_m": 12.0,
+  "max_speed_mps": 22.0,
+  "observation_dim": 14,
+  "action_dim": 2,
+  "action_definition": [
+    "normalized Delta-v per step",
+    "normalized Delta-heading per step"
+  ],
+  "reward_definition": {
+    "progress": "+100.0 * delta_progress / track_length",
+    "time_penalty": "-1.0 * dt per step",
+    "off_track": -50.0,
+    "lap_completion_bonus": 15.0,
+    "lateral_penalty": 0
+  },
+  "last_validation_evaluation": {
+    "checkpoint_steps": 150000,
+    "ppo_success_rate": 1.0,
+    "baseline_success_rate": 1.0,
+    "ppo_successful_laps": 12,
+    "baseline_successful_laps": 12,
+    "ppo_mean_lap_time": 16.280555555555527,
+    "baseline_mean_lap_time": 22.591666666666942,
+    "ppo_mean_progress_fraction": 1.0,
+    "baseline_mean_progress_fraction": 1.0
+  },
+  "best_validation_checkpoint": {
+    "checkpoint_steps": 150000,
+    "validation_score": [
+      1.0,
+      -16.280555555555527,
+      1.0
+    ],
+    "validation_metrics": {
+      "checkpoint_steps": 150000,
+      "ppo_success_rate": 1.0,
+      "baseline_success_rate": 1.0,
+      "ppo_successful_laps": 12,
+      "baseline_successful_laps": 12,
+      "ppo_mean_lap_time": 16.280555555555527,
+      "baseline_mean_lap_time": 22.591666666666942,
+      "ppo_mean_progress_fraction": 1.0,
+      "baseline_mean_progress_fraction": 1.0
+    }
+  },
+  "number_of_ppo_updates": 74,
+  "elapsed_wall_seconds": 497.0866434574127,
+  "caveat": "A finite experiment does not prove global optimality; report measured outcomes only."
+}
